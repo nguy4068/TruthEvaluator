@@ -151,17 +151,6 @@ def evaluating(expression,index,prevValue,values,operation,to_map,result_respons
         second = evaluating(expression,i,result,values,operation,to_map,result_response)
         to_map[expression] = second
         return second
-
-                    
-                
-                            
-
-
-                
-
-
-
-
 def count_letter(expression):
     statements = []
     l = len(expression)
@@ -174,9 +163,5 @@ def count_letter(expression):
         if (s != "" and (not s in statements)):
             statements.append(s)
     return statements
-
-
-
-
 if __name__ == '__main__':
     app.run(debug=True)
