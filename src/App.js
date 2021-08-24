@@ -1,9 +1,9 @@
 import React, {useState,useEffect} from "react";
-import logo from "./logo.svg";
 import "./App.css";
 import {MainPage} from './Pages/MainPage';
 import {Header} from './Component/Header';
 import { Button } from '@material-ui/core';
+import {API} from 'aws-amplify';
 
 function App() {
   const [todo, setTodo] = useState([]);
@@ -18,9 +18,29 @@ function App() {
   const [body,setBody] = useState([]);
   const [autoFill, setAutoFill] = useState([]);
   const [convertedText, setConvertedText] = useState("");
+  const [first, setFirst] = useState(null);
+  const [second,setSecond] = useState(null);
   useEffect(()=>{
     document.getElementById('foobar').addEventListener('keyup', e => {
       console.log('Caret at: ', e.target.selectionStart)
+      var character = expression[e.target.selectionStart];
+      if (character === '('){
+        setFirst(e.target.selectionStart);
+        var track = e.target.selectionStart;
+        var count = 1;
+        while (count !== 0 && track < expression.length){
+          if (expression[track] === ')'){
+            count = count - 1;
+          }
+          if (expression[track] === '('){
+            count = count + 1;
+          }
+        }
+        if (track < expression.length){
+          setSecond(track)
+        }
+        
+      }
     })
   })
   const toggleChange = (i,j) =>{
@@ -33,15 +53,54 @@ function App() {
     }
     setResult(tempR)
   }
-  
-  const handleChange = (event) =>{
-    setName(event.target.value);
-  }
   const insert = (value) =>{
       var temp = expression
       temp = temp + value
       setExpression(temp)
     
+  }
+  const testAPI = () =>{
+    API.get('truthevaluatorAPI','/items',{
+      'queryStringParameters': {
+        'query': String(expression)
+      }}).then(
+      (data)=>{
+        console.log(data);
+        console.log(data.result);
+        if (data.error !== undefined){
+          setError(data.error)
+        }else{
+          setError(null)
+          let first = data.result[0]
+          let headerTemp = Object.keys(first)
+          console.log(headerTemp )
+          var reorderHeader = headerTemp.sort(function(a,b){return a.length-b.length});
+          setHeader(reorderHeader)
+          var tempWidth = [];
+          for (var s of reorderHeader){
+            var l = s.length*10 + 10;
+            tempWidth.push(l);
+          }
+          console.log(tempWidth)
+          setWidth(tempWidth);
+          var bodyTemp = [];
+          for (let r of data.result){
+            var truth_values = []
+            for (var b of reorderHeader){
+              var v = r[b]
+              if (v === 1){
+                truth_values.push("T")
+              }else{
+                truth_values.push("F")
+              }
+            }
+            bodyTemp.push(truth_values)
+          }
+          setResult(bodyTemp)
+          
+        }
+      }
+    );
   }
   const textConvert = () => {
     if (result){
@@ -135,83 +194,15 @@ function App() {
     
 
   }
+  const deleteResult = () =>{
+    setResult([]);
+    setConvertedText(null);
+    setHeader([]);
+  }
   const evaluate = (event) =>{
-    fetch(`/api/evaluate`,{
-      method: "POST",
-      body: JSON.stringify(expression)
-    }).then(response=>{
-      if (response.ok){
-        return response.json()
-      }
-    }).then(
-      data =>{
-
-        console.log(data.result)
-        if (data.error !== undefined){
-          setError(data.error)
-        }else{
-          setError(null)
-          let first = data.result[0]
-          let headerTemp = Object.keys(first)
-          console.log(headerTemp )
-          var reorderHeader = headerTemp.sort(function(a,b){return a.length-b.length});
-          setHeader(reorderHeader)
-          var tempWidth = [];
-          for (var s of reorderHeader){
-            var l = s.length*10 + 10;
-            tempWidth.push(l);
-          }
-          console.log(tempWidth)
-          setWidth(tempWidth);
-          var bodyTemp = [];
-          for (let r of data.result){
-            var truth_values = []
-            for (var b of reorderHeader){
-              var v = r[b]
-              if (v === 1){
-                truth_values.push("T")
-              }else{
-                truth_values.push("F")
-              }
-            }
-            bodyTemp.push(truth_values)
-          }
-          setResult(bodyTemp)
-          
-        }
-        
-      }
-    )
+    testAPI();
     event.preventDefault()
   }
-  const processRequest = (event)=>{
-      let num = parseInt(name)
-      fetch(`/api/${num}`).then(response =>{
-        if (response.ok){
-          return response.json()
-        }
-      }).then(
-        data =>{
-          console.log(data.numStatements)
-          setResult(data.numStatements)
-          console.log(result)
-        }
-      )
-      event.preventDefault();
-      
-  }
-  useEffect(() => {
-    fetch('/api').then(response => {
-      if (response.ok){
-        return response.json()
-      }
-    }
-    ).then (
-      data =>{
-        console.log(data)
-      }
-    )
-  }, [])
   return (
     <div className="App">
       <h1>Truth Table Evaluation</h1>
@@ -248,9 +239,17 @@ function App() {
       <div>
         {(error !== null) ? error:null}
       </div>
-    <Button style={{margin:"10px"}} variant="contained" color="primary" onClick={() => {textConvert()}} disableElevation>
+    <div style={{display:"flex", flexDirection:"row", justifyContent:"center"}}>
+      <Button style={{margin:"10px"}} variant="contained" color="primary" onClick={() => {textConvert()}} disableElevation>
           {'Convert to text'}
-    </Button>
+      </Button>
+      <div>
+        {result.length > 0 ? <Button style={{margin:"10px"}} variant="contained" color="primary" onClick={() => {deleteResult()}} disableElevation>
+          {'Delete Result'}
+        </Button> : null}
+      </div>
+    </div>
+    
     <div style={{display:"flex",flexDirection:"column"}}>
       <div>
         <h3>Converted text</h3>

@@ -1,0 +1,35 @@
+{
+  "paths": [
+    {
+      "name": "/items",
+      "lambdaFunction": "evaluate",
+      "privacy": {
+        "open": true
+      },
+      "policyResourceName": "/items"
+    }
+  ],
+  "resourceName": "truthevaluatorAPI",
+  "apiName": "truthevaluatorAPI",
+  "functionArns": [
+    {
+      "lambdaFunction": "evaluate"
+    }
+  ],
+  "privacy": {
+    "auth": 0,
+    "unauth": 0,
+    "authRoleName": "amplify-amplifyda7853cef7694-staging-221428-authRole",
+    "unAuthRoleName": "amplify-amplifyda7853cef7694-staging-221428-unauthRole"
+  },
+  "dependsOn": [
+    {
+      "category": "function",
+      "resourceName": "evaluate",
+      "attributes": [
+        "Name",
+        "Arn"
+      ]
+    }
+  ]
+}
